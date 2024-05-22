@@ -184,7 +184,7 @@ public class CompletableFutureTest {
     }
 
 
-    private static void test1() throws ExecutionException, InterruptedException {
+    public static void test1() throws ExecutionException, InterruptedException {
         ExecutorService threadPool = Executors.newFixedThreadPool(3);
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             System.out.println("Thread.currentThread().getName() = " + Thread.currentThread().getName());

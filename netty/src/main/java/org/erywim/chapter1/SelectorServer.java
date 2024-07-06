@@ -39,8 +39,9 @@ public class SelectorServer {
                         //是accept类型
                         ServerSocketChannel channel = (ServerSocketChannel) key.channel();//其实这里的channel 就是上面的socketChannel
                         SocketChannel accept = channel.accept();//使用accept简历连接
-                        accept.configureBlocking(false);//selector 是需要配合非阻塞模式进行使用的、
-                        SelectionKey scKey = accept.register(selector,0,null);
+                        accept.configureBlocking(false);//selector 是需要配合非阻塞模式进行使用的
+                        ByteBuffer buffer = ByteBuffer.allocate(16);
+                        SelectionKey scKey = accept.register(selector,0,buffer);
                         scKey.interestOps(SelectionKey.OP_READ);
                         log.info("accept：{}" , accept);
                         log.debug("scKey 是 ： {}",scKey.hashCode());
@@ -48,13 +49,19 @@ public class SelectorServer {
                         //是read类型
                         SocketChannel channel = (SocketChannel) key.channel();
     //                    channel.configureBlocking(false);
-                        ByteBuffer buffer = ByteBuffer.allocate(11);
+                        ByteBuffer buffer = (ByteBuffer) key.attachment();
                         int read = channel.read(buffer);
+
                         if(read == -1) {
                             key.cancel();
                         }else{
-                            buffer.flip();
-                            ByteBufferUtil.debugAll(buffer);
+                            split(buffer);
+                            if(buffer.position() == buffer.limit()) {
+                                ByteBuffer newBuffer = ByteBuffer.allocate(buffer.capacity() * 2);
+                                buffer.flip();
+                                newBuffer.put(buffer);
+                                key.attach(newBuffer);
+                            }
                         }
                     }
                     //处理完一个key之后一定要进行移除操作
@@ -65,5 +72,20 @@ public class SelectorServer {
                 }
             }
         }
+    }
+
+    private static void split(ByteBuffer buffer) {
+        buffer.flip();
+        for (int i = 0; i < buffer.limit(); i++) {
+            if ('\n' == buffer.get(i)) {
+                int msgLen = i + 1 - buffer.position();
+                ByteBuffer target = ByteBuffer.allocate(msgLen);
+                for (int i1 = 0; i1 < msgLen; i1++) {
+                    target.put(buffer.get());
+                }
+                ByteBufferUtil.debugAll(target);
+            }
+        }
+        buffer.compact();
     }
 }

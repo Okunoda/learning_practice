@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 **/src/main/resources/config/env/local/*.properties
 logs/
+*.log
 applogs/
 **/LOG_DIR_IS_UNDEFINED
 

@@ -10,6 +10,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.erywim.chapter3.server.handler.ChatRequestMessageHandler;
+import org.erywim.chapter3.server.handler.GroupChatRequestMessageHandler;
 import org.erywim.chapter3.server.handler.GroupCreateRequestMessageHandler;
 import org.erywim.chapter3.server.handler.LoginRequestMessageHandler;
 import org.erywim.chapter3.protocol.MessageCodecSharable;
@@ -30,6 +31,7 @@ public class ChatServer {
         LoginRequestMessageHandler loginRequestMessageHandler = new LoginRequestMessageHandler();
         ChatRequestMessageHandler chatRequestMessageHandler = new ChatRequestMessageHandler();
         GroupCreateRequestMessageHandler groupCreateRequestMessageHandler = new GroupCreateRequestMessageHandler();
+        GroupChatRequestMessageHandler groupChatRequestMessageHandler = new GroupChatRequestMessageHandler();
         try {
             ChannelFuture channelFuture = new ServerBootstrap().group(boss, worker)
                     .channel(NioServerSocketChannel.class)
@@ -43,8 +45,8 @@ public class ChatServer {
                                     .addLast(messageCodecSharable)
                                     .addLast(loginRequestMessageHandler)
                                     .addLast(chatRequestMessageHandler)
-                                    .addLast(groupCreateRequestMessageHandler);
-
+                                    .addLast(groupCreateRequestMessageHandler)
+                                    .addLast(groupChatRequestMessageHandler);
                         }
                     }).bind(new InetSocketAddress("127.0.0.1", 8123))
                     .sync();

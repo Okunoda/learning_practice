@@ -5,6 +5,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
 import lombok.extern.slf4j.Slf4j;
+import org.erywim.chapter3.config.Config;
 import org.erywim.chapter3.message.Message;
 
 import java.io.ByteArrayInputStream;
@@ -27,18 +28,19 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 2. 1 字节的版本,
         out.writeByte(1);
         // 3. 1 字节的序列化方式 jdk 0 , json 1
-        out.writeByte(0);
-        // 4. 1 字节的指令类型
+        out.writeByte(Config.getSerializerAlgorithm().ordinal());//拿到枚举类的顺序值
+        // 4. 1 字节的 指令消息类型
         out.writeByte(msg.getMessageType());
         // 5. 4 个字节
         out.writeInt(msg.getSequenceId());
         // 无意义，对齐填充
         out.writeByte(0xff);
         // 6. 获取内容的字节数组
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(msg);
-        byte[] bytes = bos.toByteArray();
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//        ObjectOutputStream oos = new ObjectOutputStream(bos);
+//        oos.writeObject(msg);
+//        byte[] bytes = bos.toByteArray();
+        byte[] bytes = Config.getSerializerAlgorithm().serialize(msg);
         // 7. 长度
         out.writeInt(bytes.length);
         // 8. 写入内容
@@ -50,16 +52,21 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         int magicNum = in.readInt();
         byte version = in.readByte();
-        byte serializerAlgorithm = in.readByte(); // 0 或 1
-        byte messageType = in.readByte(); // 0,1,2...
+        byte serializerAlgorithm = in.readByte(); //序列化算法 0 或 1
+        byte messageType = in.readByte(); //指令消息类型 0,1,2...
         int sequenceId = in.readInt();
         in.readByte();
         int length = in.readInt();
         byte[] bytes = new byte[length];
         in.readBytes(bytes, 0, length);
 
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-        Message message = (Message) ois.readObject();
+//        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+//        Message message = (Message) ois.readObject();
+        //根据消息传来时候的序列化类型找到对应的序列化算法
+        Serializer.Algorithm algorithm = Serializer.Algorithm.values()[serializerAlgorithm];
+        //确定具体的消息类型
+        Class<? extends Message> clazz = Message.getMessageClass(messageType);
+        Message message = algorithm.deserialize(bytes, clazz);
         log.info("{}",message);
         out.add(message);
     }

@@ -1,4 +1,4 @@
-package org.erywim.chapter3.handler;
+package org.erywim.chapter3.server.handler;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;

@@ -1,16 +1,17 @@
 package org.erywim.chapter3.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.erywim.chapter3.message.*;
 import org.erywim.chapter3.protocol.MessageCodecSharable;
 
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Erywim 2024/7/24
  */
+@Slf4j
 public class ChatClient {
     public static void main(String[] args) {
         NioEventLoopGroup group = new NioEventLoopGroup();
@@ -45,6 +47,21 @@ public class ChatClient {
                                     .addLast(new LengthFieldBasedFrameDecoder(1024, 12, 4, 0, 0)) // 固定帧长解析器，注意不能用单一实例，否则多线程并发时会出错
                                     .addLast(loggingHandler)
                                     .addLast(messageCodecSharable)
+                                    //IdleStateHandler是用来判断是不是 读空闲事件过长 或 写空闲事件过长
+                                    // 5s 内如果没有收到 channel 的数据，会触发一个 IdleState#WRITER_IDLE 事件
+                                    .addLast(new IdleStateHandler(0,3,0))
+                                    .addLast(new ChannelDuplexHandler(){
+                                        //用来处理一些特殊事件
+                                        @Override
+                                        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                                            IdleStateEvent ev = (IdleStateEvent) evt;
+                                            //触发了写空闲事件
+                                            if (ev.state().equals(IdleState.WRITER_IDLE)) {
+//                                                log.info("3s 没有向服务器发送数据了，发送心跳包");
+                                                ctx.channel().writeAndFlush(new PingMessage());
+                                            }
+                                        }
+                                    })
                                     .addLast("clientHandler", new ChannelInboundHandlerAdapter() {
                                         //在连接建立之后发送登入信息
                                         @Override

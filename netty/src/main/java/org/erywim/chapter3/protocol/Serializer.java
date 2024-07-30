@@ -1,8 +1,9 @@
 package org.erywim.chapter3.protocol;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -47,16 +48,34 @@ public interface Serializer {
         Json {
             @Override
             public <T> T deserialize(byte[] data, Class<T> clazz) {
+                Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
                 String json = new String(data, StandardCharsets.UTF_8);
-                return new Gson().fromJson(json, clazz);
+                return gson.fromJson(json, clazz);
             }
 
             @Override
             public <T> byte[] serialize(T obj) {
-                String json = new Gson().toJson(obj);
+                Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
+                String json = gson.toJson(obj);
                 return json.getBytes(StandardCharsets.UTF_8);
             }
         }
+    }
+    class ClassCodec implements JsonSerializer<Class<?>>, JsonDeserializer<Class<?>>{
+        @Override
+        public Class<?> deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+            try {
+                String asString = jsonElement.getAsString();
+                return Class.forName(asString);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
+        @Override
+        public JsonElement serialize(Class<?> aClass, Type type, JsonSerializationContext jsonSerializationContext) {
+            String name = aClass.getName();
+            return new JsonPrimitive(name);
+        }
     }
 }

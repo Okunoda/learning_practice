@@ -9,10 +9,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.concurrent.DefaultPromise;
 import lombok.extern.slf4j.Slf4j;
 import org.erywim.chapter3.message.RpcRequestMessage;
 import org.erywim.chapter3.protocol.MessageCodecSharable;
 import org.erywim.chapter3.protocol.SequenceIdGenerator;
+import org.erywim.chapter3.server.handler.RpcRequestMessageHandler;
 import org.erywim.chapter3.server.handler.RpcResponseMessageHandler;
 import org.erywim.chapter3.server.service.HelloService;
 
@@ -28,7 +30,7 @@ public class RpcClientManager {
 
     public static void main(String[] args) {
         HelloService service = getProxyClass(HelloService.class);
-        service.sayHello("zhangsan ");
+        System.out.println("service.sayHello(\"zhangsan \") = " + service.sayHello("zhangsan "));
         service.sayHello("lisi");
     }
 
@@ -37,19 +39,31 @@ public class RpcClientManager {
     public static <T> T getProxyClass(Class<T> clazz){
         ClassLoader classLoader = clazz.getClassLoader();
         Class<?>[] interfaces = new Class[]{clazz};
-
+                                                                    //     被代理对象某次执行的方法   方法的参数
         Object o = Proxy.newProxyInstance(classLoader, interfaces, (proxy, method, args) -> {
+            int sequenceId = SequenceIdGenerator.nextId();//ctrl + alt + v 提取变量
+            //1. 把方法构建成协议格式
             RpcRequestMessage message = new RpcRequestMessage(
-                    SequenceIdGenerator.nextId(),
+                    sequenceId,
                     clazz.getName(),
                     method.getName(),
                     method.getReturnType(),
                     method.getParameterTypes(),
                     args
             );
-            //在channel中将数据写出
+            //2. 在channel中将数据写出
             getChannel().writeAndFlush(message);
-            return null;
+            //3. 创建promise等待结果                                指定 promise 异步接收结果的线程
+            DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
+            RpcResponseMessageHandler.PROMISES.put(sequenceId,promise);
+
+            //4.当前线程等待 promise 结果
+            promise.await();
+            if (promise.isSuccess()) {
+                return promise.get();
+            }else{
+                throw new RuntimeException(promise.cause());
+            }
         });
         return (T) o;
     }

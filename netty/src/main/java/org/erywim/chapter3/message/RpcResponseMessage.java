@@ -8,24 +8,8 @@ import lombok.ToString;
  */
 
 @ToString(callSuper = true)
-
+@Data
 public class RpcResponseMessage extends Message {
-    public Object getReturnValue() {
-        return returnValue;
-    }
-
-    public void setReturnValue(Object returnValue) {
-        this.returnValue = returnValue;
-    }
-
-    public Exception getExceptionValue() {
-        return exceptionValue;
-    }
-
-    public void setExceptionValue(Exception exceptionValue) {
-        this.exceptionValue = exceptionValue;
-    }
-
     /**
      * 返回值
      */

@@ -8,7 +8,6 @@ import org.erywim.chapter3.message.RpcRequestMessage;
 import org.erywim.chapter3.message.RpcResponseMessage;
 import org.erywim.chapter3.server.service.HelloService;
 import org.erywim.chapter3.server.service.ServicesFactory;
-import org.erywim.chapter3.server.service.UserServiceFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

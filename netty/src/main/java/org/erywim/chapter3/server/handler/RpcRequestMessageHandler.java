@@ -30,7 +30,7 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException |
                  InvocationTargetException e) {
             e.printStackTrace();
-            response.setExceptionValue(e);
+            response.setExceptionValue(new Exception("远程调用异常"+e.getCause().getMessage()));
         }
         ChannelFuture channelFuture = ctx.channel().writeAndFlush(response).addListener(promise ->{
             if(!promise.isSuccess()){

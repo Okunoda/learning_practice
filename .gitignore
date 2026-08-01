@@ -49,3 +49,4 @@ package.zip
 /.idea/
 */.venv
 */.xcodemap
+.env

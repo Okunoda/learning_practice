@@ -5,7 +5,7 @@ todo：
 
 - [x] 工具（函数调用）
 - RAG
-  - [ ] Easy RAG
+  - [x] Easy RAG
   - [ ] Naive RAG
   - [ ] Advanced RAG
   - [ ] 查询压缩 RAG 

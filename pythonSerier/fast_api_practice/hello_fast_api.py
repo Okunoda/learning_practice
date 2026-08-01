@@ -1,3 +1,5 @@
+from idlelib.query import Query
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -40,3 +42,28 @@ def post_weather(req:WeatherRequest) -> dict :  # json形式
         "weather": "服务器繁忙，稍后重试",
         "temperature": "服务器繁忙，稍后重试"
     }
+
+from fastapi import Path,Query
+from pydantic import Field
+
+class PathValidateReq(BaseModel):
+    id:int = Field(5,lt=100,gt=0,description="取值范围必须在0-100之间")
+    name:str = Field(...,min_length=1,max_length=5,description="参数字符长度需在1-5之间")
+
+@app.post("/api/validate/{path_var}")
+def validate(req:PathValidateReq,path_var:int = Path(...,lt=20,gt=0)):
+    return {
+        "id":f"id是{req.id}",
+        "name": f"name是{req.name}",
+        "path_var": f"path_var 是 {path_var}"
+    }
+
+
+from fastapi import HTTPException
+
+@app.get("/api/exception")
+def get_exception(text:str):
+    if text == 'normal':
+        return "normal response"
+    else:
+        return HTTPException(status_code=403,detail="forbidden")

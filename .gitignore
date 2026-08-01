@@ -48,3 +48,4 @@ package.zip
 .DS_Store
 /.idea/
 */.venv
+*/.xcodemap

@@ -47,3 +47,4 @@ package.zip
 ### Mac OS ###
 .DS_Store
 /.idea/
+*/.venv

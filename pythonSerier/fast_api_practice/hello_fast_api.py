@@ -67,3 +67,29 @@ def get_exception(text:str):
         return "normal response"
     else:
         return HTTPException(status_code=403,detail="forbidden")
+
+@app.middleware("http") # 表示拦截 HTTP 请求，还有一个 "websocket" 类型，拦截 WebSocket 连接
+async def middleware1(request,call_next):
+    """
+    类似 AOP 的洋葱模型，顺序则是代码文件自上而下
+    """
+    print("中间件1 start")
+    response = await call_next(request)
+    print("中间件1 end")
+    return response
+
+@app.middleware("http")
+async def middleware2(request,call_next):
+    """
+    类似 AOP 的洋葱模型，顺序则是代码文件自上而下
+    """
+    print("中间件2 start")
+    response = await call_next(request)
+    print("中间件2 end")
+    return response
+
+@app.get("/api/middleware")
+def middleware():
+    print("请求处理")
+    return "请求返回"
+

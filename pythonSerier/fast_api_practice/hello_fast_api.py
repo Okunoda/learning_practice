@@ -93,3 +93,21 @@ def middleware():
     print("请求处理")
     return "请求返回"
 
+
+def common_parameters(
+        page_size: int = Query(10), # 不给默认值时，被注入后这两个值就是入参必填
+        page_num: int = Query(0),
+):
+    return {
+        "page_size": page_size,
+        "page_num": page_num
+    }
+
+from fastapi import Depends
+
+@app.get("/api/depend")
+def depend(common = Depends(common_parameters)):
+    return common
+
+
+

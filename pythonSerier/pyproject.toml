@@ -11,4 +11,5 @@ dependencies = [
     "sqlmodel>=0.0.39",
     "langchain-core>=1.5.3",
     "rich>=15.0.0",
+    "langgraph>=1.2.10",
 ]
